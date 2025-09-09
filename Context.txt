@@ -1,0 +1,98 @@
+Smart India Hackathon Idea – Mobile/Web Platform for Democratized Athlete Talent Assessment
+📌 Background & Context
+
+India has millions of aspiring athletes, especially in rural and remote areas, who rarely get access to proper infrastructure or scouting opportunities. Talent identification programs usually require physical presence in testing centers, which limits reach.
+
+The Sports Authority of India (SAI) already has a standard set of fitness tests (height, weight, vertical jump, shuttle run, sit-ups, endurance runs) for evaluating athletes. But scaling this across the country is a massive challenge due to:
+
+Lack of assessment infrastructure in rural areas.
+
+No standardized, scalable way to record and evaluate tests.
+
+Limited visibility for athletes who don’t have access to big cities or academies.
+
+This creates a big gap between hidden talent and discovery.
+
+💡 The Idea (Problem Statement 25073)
+
+We propose building a low-cost, mobile-first, AI-assisted platform that allows athletes to self-record their performance in standardized fitness tests, get instant feedback, and securely submit results for official review.
+
+This ensures democratization of sports talent assessment → every athlete, whether in a city or remote village, has equal opportunity to showcase talent.
+
+🎯 Core Features
+1. Athlete-Side App (Web + React Native Mobile)
+
+Registration & Profile: Athletes register with name, age, gender, district.
+
+Test Instructions: Clear guides (text + infographic) for each test.
+
+Video Capture: Athletes record their performance (camera-guided, with overlays).
+
+On-device Processing (Mock AI): Basic local analysis → count sit-ups, measure jump height, run timing, etc. (Fake ML in MVP, real model later).
+
+Instant Feedback: Compare performance with age/gender benchmarks.
+
+Gamification: Badges, leaderboards, and progress tracker to keep athletes engaged.
+
+Submission: Verified results + videos are sent securely to SAI.
+
+2. Official/SAI-Side Dashboard
+
+Submission Management: Officials see all athlete submissions, sorted by region, test, or flagged status.
+
+Review Panel: Play athlete’s video, view performance metrics, and validate/flag/reject submissions.
+
+AI Cheat Detection (Mock in MVP): Highlight anomalies (fake video, skipped reps, etc.).
+
+Reports & Analytics: Participation trends (by state/district), top performers, percentile distribution.
+
+Export Data: Downloadable reports for further processing.
+
+3. Innovative Elements
+
+Offline Video Analysis: Works even with poor internet; uploads once connected.
+
+On-device ML (lightweight): No heavy servers required, runs on entry-level phones.
+
+Gamified Engagement: Badges, streaks, and instant percentile feedback.
+
+Scalable Backend: Supports lakhs of athletes securely.
+
+📌 Impact
+
+Democratization: Athletes from villages, towns, and cities get equal access to talent assessment.
+
+Scalability: Works across India without requiring massive infrastructure.
+
+Transparency: AI-based video verification + manual review reduces bias.
+
+Mass Participation: Encourages youth to try and record themselves, increasing sports culture awareness.
+
+🔧 Tech Stack (Planned)
+
+Frontend (Athlete): React (web), React Native (mobile).
+
+Frontend (Officials): React (web).
+
+Backend: Node.js + Express (REST APIs).
+
+Database: PostgreSQL / MongoDB.
+
+AI/ML (MVP): Fake/mock models for demo; real implementation could use TensorFlow Lite / MediaPipe for pose detection.
+
+Charts & Visuals: Recharts / Chart.js.
+
+Storage: Cloud (AWS S3 / Firebase) for videos.
+
+🗂️ User Flow Summary
+
+Athlete:
+
+Register → Dashboard → Select Test → Record Video → Preview → Submit → See Results/Badges.
+
+Official:
+
+Login → Dashboard (New Submissions, Flagged, Verified) → Review Submission → Approve/Reject/Flag → Reports.
+
+⚡ In short:
+We’re building a lightweight, scalable, gamified AI-assisted platform to make sports talent assessment accessible to everyone in India, no matter where they live.
