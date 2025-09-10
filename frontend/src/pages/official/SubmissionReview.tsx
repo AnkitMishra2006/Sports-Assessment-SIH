@@ -46,7 +46,7 @@ const SubmissionReview = () => {
     const foundSubmission = mockSubmissions.find(sub => sub.id === submissionId);
     if (foundSubmission) {
       setSubmission(foundSubmission);
-      setReviewStatus(foundSubmission.status);
+      setReviewStatus(foundSubmission.status as "pending" | "approved" | "flagged" | "rejected");
     }
   }, [submissionId]);
 
@@ -87,8 +87,9 @@ const SubmissionReview = () => {
   const test = fitnessTests.find(t => t.id === submission.testType);
 
   const handleReviewAction = (action: "approve" | "reject" | "flag") => {
-    const newStatus = action === "approve" ? "approved" : 
-                     action === "reject" ? "rejected" : "flagged";
+    const newStatus: "pending" | "approved" | "flagged" | "rejected" = 
+      action === "approve" ? "approved" : 
+      action === "reject" ? "rejected" : "flagged";
     
     setReviewStatus(newStatus);
     

@@ -24,11 +24,14 @@ interface AthleteData {
   dateOfBirth: string;
   gender: string;
   testProgress: {
-    heightWeight: { status: string; completedAt: string | null };
     verticalJump: { status: string; completedAt: string | null };
     sitUps: { status: string; completedAt: string | null };
     shuttleRun: { status: string; completedAt: string | null };
     enduranceRun: { status: string; completedAt: string | null };
+    pushUps: { status: string; completedAt: string | null };
+    flexibility: { status: string; completedAt: string | null };
+    balance: { status: string; completedAt: string | null };
+    broadJump: { status: string; completedAt: string | null };
   };
   badges: string[];
 }

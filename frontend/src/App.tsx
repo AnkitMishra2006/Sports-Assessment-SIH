@@ -15,6 +15,7 @@ import OfficialReports from "./pages/official/OfficialReports";
 import OfficialProfile from "./pages/official/OfficialProfile";
 import SubmissionReview from "./pages/official/SubmissionReview";
 import AthleteHistory from "./pages/athlete/AthleteHistory";
+import ExerciseAnalysis from "./pages/athlete/ExerciseAnalysis";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const App = () => (
           <Route path="/athlete/dashboard" element={<AthleteDashboard />} />
           <Route path="/athlete/profile" element={<AthleteProfile />} />
           <Route path="/athlete/history" element={<AthleteHistory />} />
+          <Route path="/athlete/analysis" element={<ExerciseAnalysis />} />
           <Route path="/athlete/test/vertical-jump" element={<VerticalJumpTest />} />
           <Route path="/athlete/test/:testId" element={<VerticalJumpTest />} />
           <Route path="/official/login" element={<OfficialLogin />} />
