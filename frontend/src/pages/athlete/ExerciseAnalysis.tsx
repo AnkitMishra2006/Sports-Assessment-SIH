@@ -1,11 +1,23 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ExerciseSelector, type ExerciseType, type AnalysisMode } from '@/components/ExerciseSelector';
-import { AnalysisInterface, type AnalysisResults } from '@/components/AnalysisInterface';
+import { EnhancedExerciseSelector as ExerciseSelector, type ExerciseType, type AnalysisMode } from '@/components/Exercise/EnhancedExerciseSelector';
+import { LiveAnalysisInterface } from '@/components/Exercise/LiveAnalysisInterface';
+import { VideoUploadInterface } from '@/components/Exercise/VideoUploadInterface';
 import { ResultsDashboard } from '@/components/ResultsDashboard';
 import { useToast } from '@/hooks/use-toast';
 
 type AppState = 'selection' | 'analysis' | 'results';
+
+interface AnalysisResults {
+  exercise: ExerciseType;
+  totalReps: number;
+  formQuality: number;
+  cheatingDetected: boolean;
+  averageSpeed: number;
+  duration: number;
+  stages: string[];
+  sessionTime?: number;
+}
 
 export default function ExerciseAnalysis() {
   const [appState, setAppState] = useState<AppState>('selection');
@@ -87,12 +99,21 @@ export default function ExerciseAnalysis() {
         )}
 
         {appState === 'analysis' && selectedExercise && (
-          <AnalysisInterface
-            exercise={selectedExercise}
-            mode={selectedMode}
-            onComplete={handleAnalysisComplete}
-            onBack={handleBack}
-          />
+          <>
+            {selectedMode === 'live' ? (
+              <LiveAnalysisInterface
+                exerciseType={selectedExercise}
+                onComplete={handleAnalysisComplete}
+                onBack={handleBack}
+              />
+            ) : (
+              <VideoUploadInterface
+                exerciseType={selectedExercise}
+                onComplete={handleAnalysisComplete}
+                onBack={handleBack}
+              />
+            )}
+          </>
         )}
 
         {appState === 'results' && analysisResults && (
