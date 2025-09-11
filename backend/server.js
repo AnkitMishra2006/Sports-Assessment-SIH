@@ -18,7 +18,11 @@ const port = process.env.PORT || 5000;
 // Basic middleware
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN || "http://localhost:3000",
+    origin: [
+      process.env.CORS_ORIGIN || "http://localhost:3000",
+      "http://localhost:8080",
+      "http://localhost:5173",
+    ],
     credentials: true,
   })
 );
@@ -38,11 +42,13 @@ if (process.env.NODE_ENV === "development") {
 const authRoutes = require("./routes/authRoutes");
 const athleteRoutes = require("./routes/athleteRoutes");
 const officialRoutes = require("./routes/officialRoutes");
+const analysisRoutes = require("./routes/analysisRoutes");
 
 // Use routes
 app.use("/api/auth", authRoutes);
 app.use("/api/athletes", athleteRoutes);
 app.use("/api/officials", officialRoutes);
+app.use("/api/analysis", analysisRoutes);
 
 // Routes
 // Health check endpoint
@@ -92,6 +98,13 @@ app.get("/api", (req, res) => {
       "officials.submissions": "GET /api/officials/submissions (Protected)",
       "officials.review":
         "PUT /api/officials/submissions/:id/review (Protected)",
+
+      // Analysis
+      "analysis.video": "POST /api/analysis/analyze-video (Protected)",
+      "analysis.live": "POST /api/analysis/analyze-live (Protected)",
+      "analysis.video.get": "GET /api/analysis/video/:filename",
+      "analysis.results": "GET /api/analysis/results/:submissionId (Protected)",
+      "analysis.history": "GET /api/analysis/history (Protected)",
     },
   });
 });

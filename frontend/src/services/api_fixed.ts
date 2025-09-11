@@ -35,7 +35,7 @@ export const testConnection = async () => {
   }
 };
 
-// API request wrapper - DEMO VERSION (No Auth Required)
+// API request wrapper with auth
 const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
   const url = `${API_BASE_URL}${endpoint}`;
   const headers: Record<string, string> = {
@@ -47,7 +47,10 @@ const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
     headers["Content-Type"] = "application/json";
   }
 
-  // For demo, we don't require auth token
+  if (authToken) {
+    headers["Authorization"] = `Bearer ${authToken}`;
+  }
+
   console.log(`Making API request to: ${url}`);
   console.log(`Headers:`, headers);
 
@@ -58,6 +61,12 @@ const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
     });
 
     console.log(`Response status: ${response.status}`);
+
+    if (response.status === 401) {
+      clearAuthToken();
+      window.location.href = "/athlete/login";
+      throw new Error("Authentication required");
+    }
 
     if (!response.ok) {
       const errorText = await response.text();

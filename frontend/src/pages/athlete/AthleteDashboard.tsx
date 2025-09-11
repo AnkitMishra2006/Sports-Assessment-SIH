@@ -1,20 +1,26 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { 
-  Trophy, 
-  User, 
-  Activity, 
+import {
+  Trophy,
+  User,
+  Activity,
   TrendingUp,
   Target,
   Timer,
   Zap,
   Award,
   CheckCircle,
-  Clock
+  Clock,
 } from "lucide-react";
 
 interface AthleteData {
@@ -53,7 +59,9 @@ const AthleteDashboard = () => {
           <CardContent className="text-center py-8">
             <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h2 className="text-2xl font-bold mb-2">No Data Found</h2>
-            <p className="text-muted-foreground mb-4">Please login or register to access your dashboard.</p>
+            <p className="text-muted-foreground mb-4">
+              Please login or register to access your dashboard.
+            </p>
             <Link to="/athlete/login">
               <Button>Go to Login</Button>
             </Link>
@@ -70,7 +78,7 @@ const AthleteDashboard = () => {
       description: "Explosive power assessment",
       icon: TrendingUp,
       status: athleteData.testProgress.verticalJump?.status || "pending",
-      route: "/athlete/test/vertical-jump"
+      route: "/athlete/analysis?exercise=vertical-jump",
     },
     {
       id: "sitUps",
@@ -78,7 +86,7 @@ const AthleteDashboard = () => {
       description: "Core strength endurance test",
       icon: Activity,
       status: athleteData.testProgress.sitUps?.status || "pending",
-      route: "/athlete/test/sit-ups"
+      route: "/athlete/analysis?exercise=sit-ups",
     },
     {
       id: "shuttleRun",
@@ -86,7 +94,7 @@ const AthleteDashboard = () => {
       description: "Agility and speed assessment",
       icon: Zap,
       status: athleteData.testProgress.shuttleRun?.status || "pending",
-      route: "/athlete/test/shuttle-run"
+      route: "/athlete/analysis?exercise=shuttle-run",
     },
     {
       id: "enduranceRun",
@@ -94,7 +102,7 @@ const AthleteDashboard = () => {
       description: "Cardiovascular fitness test",
       icon: Timer,
       status: athleteData.testProgress.enduranceRun?.status || "pending",
-      route: "/athlete/test/endurance-run"
+      route: "/athlete/analysis?exercise=endurance-run",
     },
     {
       id: "pushUps",
@@ -102,7 +110,7 @@ const AthleteDashboard = () => {
       description: "Upper body strength test",
       icon: Activity,
       status: athleteData.testProgress.pushUps?.status || "pending",
-      route: "/athlete/test/push-ups"
+      route: "/athlete/analysis?exercise=bicep-curls",
     },
     {
       id: "flexibility",
@@ -110,7 +118,7 @@ const AthleteDashboard = () => {
       description: "Sit and reach test",
       icon: User,
       status: athleteData.testProgress.flexibility?.status || "pending",
-      route: "/athlete/test/flexibility"
+      route: "/athlete/analysis?exercise=flexibility",
     },
     {
       id: "balance",
@@ -118,7 +126,7 @@ const AthleteDashboard = () => {
       description: "Single leg balance test",
       icon: Target,
       status: athleteData.testProgress.balance?.status || "pending",
-      route: "/athlete/test/balance"
+      route: "/athlete/analysis?exercise=balance",
     },
     {
       id: "broadJump",
@@ -126,11 +134,13 @@ const AthleteDashboard = () => {
       description: "Standing broad jump test",
       icon: TrendingUp,
       status: athleteData.testProgress.broadJump?.status || "pending",
-      route: "/athlete/test/broad-jump"
-    }
+      route: "/athlete/analysis?exercise=broad-jump",
+    },
   ];
 
-  const completedTests = tests.filter(test => test.status === "completed").length;
+  const completedTests = tests.filter(
+    (test) => test.status === "completed"
+  ).length;
   const progressPercentage = (completedTests / tests.length) * 100;
 
   const getAge = (dateOfBirth: string) => {
@@ -138,7 +148,10 @@ const AthleteDashboard = () => {
     const birthDate = new Date(dateOfBirth);
     let age = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    if (
+      monthDiff < 0 ||
+      (monthDiff === 0 && today.getDate() < birthDate.getDate())
+    ) {
       age--;
     }
     return age;
@@ -151,7 +164,9 @@ const AthleteDashboard = () => {
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-2">
             <Trophy className="h-8 w-8 text-primary" />
-            <h1 className="text-2xl font-bold text-primary">SAI Talent Assessment</h1>
+            <h1 className="text-2xl font-bold text-primary">
+              SAI Talent Assessment
+            </h1>
           </div>
           <div className="flex items-center space-x-4">
             <Badge variant="outline">{athleteData.district}</Badge>
@@ -168,9 +183,12 @@ const AthleteDashboard = () => {
       <div className="container mx-auto px-4 py-8">
         {/* Welcome Section */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Welcome back, {athleteData.name}!</h1>
+          <h1 className="text-3xl font-bold mb-2">
+            Welcome back, {athleteData.name}!
+          </h1>
           <p className="text-muted-foreground">
-            Age: {getAge(athleteData.dateOfBirth)} • {athleteData.gender} • {athleteData.district}
+            Age: {getAge(athleteData.dateOfBirth)} • {athleteData.gender} •{" "}
+            {athleteData.district}
           </p>
         </div>
 
@@ -188,11 +206,15 @@ const AthleteDashboard = () => {
           <CardContent>
             <div className="flex items-center justify-between mb-4">
               <span className="text-sm font-medium">Overall Progress</span>
-              <span className="text-sm text-muted-foreground">{completedTests}/{tests.length} tests completed</span>
+              <span className="text-sm text-muted-foreground">
+                {completedTests}/{tests.length} tests completed
+              </span>
             </div>
             <Progress value={progressPercentage} className="mb-4" />
             <div className="flex justify-between items-center">
-              <span className="text-2xl font-bold text-primary">{Math.round(progressPercentage)}%</span>
+              <span className="text-2xl font-bold text-primary">
+                {Math.round(progressPercentage)}%
+              </span>
               {progressPercentage === 100 && (
                 <Badge className="bg-gradient-success">
                   <Award className="mr-1 h-4 w-4" />
@@ -208,14 +230,19 @@ const AthleteDashboard = () => {
           {tests.map((test) => {
             const IconComponent = test.icon;
             const isCompleted = test.status === "completed";
-            
+
             return (
-              <Card key={test.id} className="shadow-card hover:shadow-glow transition-all duration-300">
+              <Card
+                key={test.id}
+                className="shadow-card hover:shadow-glow transition-all duration-300"
+              >
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                      isCompleted ? 'bg-gradient-success' : 'bg-gradient-hero'
-                    }`}>
+                    <div
+                      className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                        isCompleted ? "bg-gradient-success" : "bg-gradient-hero"
+                      }`}
+                    >
                       {isCompleted ? (
                         <CheckCircle className="h-6 w-6 text-white" />
                       ) : (
@@ -230,8 +257,8 @@ const AthleteDashboard = () => {
                   <CardDescription>{test.description}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button 
-                    className="w-full" 
+                  <Button
+                    className="w-full"
                     variant={isCompleted ? "outline" : "default"}
                     asChild
                   >

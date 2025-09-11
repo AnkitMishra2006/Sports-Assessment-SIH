@@ -28,19 +28,27 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Landing />} />
+          <Route path="/demo" element={<ExerciseAnalysis />} />
+          <Route path="/demo/sit-ups" element={<ExerciseAnalysis />} />
           <Route path="/athlete/register" element={<AthleteRegister />} />
           <Route path="/athlete/login" element={<AthleteLogin />} />
           <Route path="/athlete/dashboard" element={<AthleteDashboard />} />
           <Route path="/athlete/profile" element={<AthleteProfile />} />
           <Route path="/athlete/history" element={<AthleteHistory />} />
           <Route path="/athlete/analysis" element={<ExerciseAnalysis />} />
-          <Route path="/athlete/test/vertical-jump" element={<VerticalJumpTest />} />
+          <Route
+            path="/athlete/test/vertical-jump"
+            element={<VerticalJumpTest />}
+          />
           <Route path="/athlete/test/:testId" element={<VerticalJumpTest />} />
           <Route path="/official/login" element={<OfficialLogin />} />
           <Route path="/official/dashboard" element={<OfficialDashboard />} />
           <Route path="/official/reports" element={<OfficialReports />} />
           <Route path="/official/profile" element={<OfficialProfile />} />
-          <Route path="/official/review/:submissionId" element={<SubmissionReview />} />
+          <Route
+            path="/official/review/:submissionId"
+            element={<SubmissionReview />}
+          />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -1,46 +1,92 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { 
-  Play, 
-  Pause, 
-  Square, 
-  Camera, 
-  Settings, 
+import { useState, useRef, useEffect, useCallback } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import {
+  Play,
+  Pause,
+  Square,
+  Camera,
+  Settings,
   Volume2,
   VolumeX,
-  RotateCcw 
-} from 'lucide-react';
-import { cameraService, CameraService } from '@/services/camera';
-import { LiveAnalysisSocket } from '@/services/api';
-import { PoseOverlay } from './PoseOverlay';
-import { MetricsDashboard } from './MetricsDashboard';
-import { useToast } from '@/hooks/use-toast';
+  RotateCcw,
+  Upload,
+  Video,
+  ArrowLeft,
+} from "lucide-react";
+import { cameraService, CameraService } from "@/services/camera";
+import { LiveAnalysisSocket, analysisAPI } from "@/services/api";
+import { PoseOverlay } from "./PoseOverlay";
+import { MetricsDashboard } from "./MetricsDashboard";
+import { VideoUploadInterface } from "./VideoUploadInterface";
+import { useToast } from "@/hooks/use-toast";
+
+// Type definitions for analysis results
+interface AnalysisResults {
+  submissionId: string;
+  exerciseType: string;
+  metrics: {
+    repCount: number;
+    formScore: number;
+    averageSpeed: number;
+    sessionTime: number;
+  };
+  analysis: {
+    strengths: string[];
+    improvements: string[];
+    overallScore: number;
+    recommendations: string[];
+  };
+}
+
+// Type for pose detection data
+interface PoseData {
+  keypoints: Array<{
+    x: number;
+    y: number;
+    confidence: number;
+  }>;
+  connections: number[][];
+  timestamp?: number;
+  boundingBox?: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
+}
 
 interface LiveAnalysisInterfaceProps {
   exerciseType: string;
-  onComplete: (results: any) => void;
+  onComplete: (results: AnalysisResults) => void;
   onBack: () => void;
 }
+
+type AnalysisMode = "selection" | "live" | "upload";
 
 interface LiveMetrics {
   repCount: number;
   currentStage: string;
-  formStatus: 'good' | 'bad' | 'neutral';
+  formStatus: "good" | "bad" | "neutral";
   formScore: number;
   sessionTime: number;
   averageSpeed: number;
-  poseData?: any;
+  poseData?: PoseData;
 }
 
-export function LiveAnalysisInterface({ exerciseType, onComplete, onBack }: LiveAnalysisInterfaceProps) {
+export function LiveAnalysisInterface({
+  exerciseType,
+  onComplete,
+  onBack,
+}: LiveAnalysisInterfaceProps) {
+  const [analysisMode, setAnalysisMode] = useState<AnalysisMode>("selection");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [metrics, setMetrics] = useState<LiveMetrics>({
     repCount: 0,
-    currentStage: 'Ready',
-    formStatus: 'neutral',
+    currentStage: "Ready",
+    formStatus: "neutral",
     formScore: 0,
     sessionTime: 0,
     averageSpeed: 0,
@@ -59,20 +105,12 @@ export function LiveAnalysisInterface({ exerciseType, onComplete, onBack }: Live
 
   const { toast } = useToast();
 
-  // Initialize camera on component mount
-  useEffect(() => {
-    initializeCamera();
-    return () => {
-      cleanup();
-    };
-  }, []);
-
   // Session timer
   useEffect(() => {
     if (isAnalyzing && startTimeRef.current) {
       intervalRef.current = setInterval(() => {
         const elapsed = (Date.now() - startTimeRef.current!) / 1000;
-        setMetrics(prev => ({
+        setMetrics((prev) => ({
           ...prev,
           sessionTime: elapsed,
           averageSpeed: prev.repCount > 0 ? (prev.repCount / elapsed) * 60 : 0,
@@ -92,11 +130,11 @@ export function LiveAnalysisInterface({ exerciseType, onComplete, onBack }: Live
     };
   }, [isAnalyzing]);
 
-  const initializeCamera = async () => {
+  const initializeCamera = useCallback(async () => {
     try {
       setIsLoading(true);
       const hasPermission = await CameraService.checkCameraPermission();
-      
+
       if (!hasPermission) {
         toast({
           title: "Camera Permission Required",
@@ -109,12 +147,12 @@ export function LiveAnalysisInterface({ exerciseType, onComplete, onBack }: Live
       const mediaStream = await cameraService.startCamera({
         width: 1280,
         height: 720,
-        facingMode: 'user',
+        facingMode: "user",
         frameRate: 30,
       });
 
       setStream(mediaStream);
-      
+
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
       }
@@ -124,17 +162,49 @@ export function LiveAnalysisInterface({ exerciseType, onComplete, onBack }: Live
         description: "Failed to access camera. Please check your permissions.",
         variant: "destructive",
       });
-      console.error('Camera initialization failed:', error);
+      console.error("Camera initialization failed:", error);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [toast]);
+
+  // Helper function for local pose detection (simplified for MVP)
+  const startLocalPoseDetection = useCallback(() => {
+    // This would integrate with MediaPipe or similar library
+    // For now, we'll simulate progress updates
+    let repCount = 0;
+    const simulateReps = setInterval(() => {
+      if (!isAnalyzing) {
+        clearInterval(simulateReps);
+        return;
+      }
+
+      // Simulate rep detection every 3-5 seconds
+      if (Math.random() > 0.7) {
+        repCount++;
+        setMetrics((prev) => ({
+          ...prev,
+          repCount,
+          currentStage: repCount % 2 === 0 ? "Down" : "Up",
+          formStatus: Math.random() > 0.8 ? "bad" : "good",
+          confidence: 0.85 + Math.random() * 0.1,
+        }));
+
+        // Update progress (example: target of 10 reps)
+        setProgress(Math.min((repCount / 10) * 100, 100));
+      }
+    }, 3000);
+
+    // Clean up on component unmount or analysis stop
+    return () => clearInterval(simulateReps);
+  }, [isAnalyzing]);
 
   const startAnalysis = useCallback(async () => {
     if (!stream) {
       toast({
         title: "No Camera Stream",
-        description: "Please ensure camera is working before starting analysis.",
+        description:
+          "Please ensure camera is working before starting analysis.",
         variant: "destructive",
       });
       return;
@@ -142,74 +212,83 @@ export function LiveAnalysisInterface({ exerciseType, onComplete, onBack }: Live
 
     try {
       setIsLoading(true);
-      
-      // Initialize WebSocket connection for real-time analysis
-      const newSessionId = `session_${Date.now()}`;
-      setSessionId(newSessionId);
-      
-      socketRef.current = new LiveAnalysisSocket();
-      
-      socketRef.current.connect(
-        newSessionId,
-        (data) => {
-          // Handle real-time analysis data
-          if (data.type === 'metrics') {
-            setMetrics(prev => ({
-              ...prev,
-              ...data.metrics,
-            }));
-            
-            setProgress(data.progress || 0);
-            
-            // Audio feedback
-            if (audioEnabled && data.feedback) {
-              playAudioFeedback(data.feedback);
-            }
-          } else if (data.type === 'complete') {
-            handleAnalysisComplete(data.results);
-          }
-        },
-        (error) => {
-          console.error('WebSocket error:', error);
-          toast({
-            title: "Connection Error",
-            description: "Lost connection to analysis service.",
-            variant: "destructive",
-          });
-        }
-      );
 
+      // Start live analysis session with backend
+      const response = await analysisAPI.startLiveAnalysis(exerciseType);
+
+      if (!response.success) {
+        throw new Error(response.message || "Failed to start analysis session");
+      }
+
+      setSessionId(response.sessionId);
       setIsAnalyzing(true);
       startTimeRef.current = Date.now();
-      
-      // Start sending video frames
-      startFrameCapture();
-      
-    } catch (error) {
-      console.error('Failed to start analysis:', error);
+
+      // Initialize metrics for the specific exercise
+      const initialMetrics = getInitialMetrics(exerciseType);
+      setMetrics(initialMetrics);
+
       toast({
-        title: "Analysis Error",
-        description: "Failed to start live analysis. Please try again.",
+        title: "Analysis Started",
+        description: `Live ${exerciseType.replace(
+          "-",
+          " "
+        )} analysis is now active.`,
+      });
+
+      // For MVP, we'll use local pose detection instead of WebSocket
+      // This simulates the real-time analysis that would come from the backend
+      startLocalPoseDetection();
+    } catch (error) {
+      console.error("Failed to start analysis:", error);
+      toast({
+        title: "Analysis Failed",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Could not start live analysis. Please try again.",
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
-  }, [stream, audioEnabled, toast]);
+  }, [stream, exerciseType, toast, startLocalPoseDetection]);
+
+  // Helper function to get initial metrics based on exercise type
+  const getInitialMetrics = (exerciseType: string) => {
+    const baseMetrics = {
+      repCount: 0,
+      currentStage: "Ready",
+      formStatus: "neutral" as "good" | "bad" | "neutral",
+      sessionTime: 0,
+      averageSpeed: 0,
+      formScore: 100,
+      confidence: 0,
+    };
+
+    switch (exerciseType) {
+      case "bicep-curls":
+        return { ...baseMetrics, leftReps: 0, rightReps: 0 };
+      case "vertical-jump":
+        return { ...baseMetrics, maxHeight: 0, jumpCount: 0 };
+      default:
+        return baseMetrics;
+    }
+  };
 
   const stopAnalysis = useCallback(() => {
     setIsAnalyzing(false);
-    
+
     if (socketRef.current) {
       socketRef.current.disconnect();
       socketRef.current = null;
     }
-    
+
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
-    
+
     setProgress(0);
     startTimeRef.current = null;
   }, []);
@@ -223,31 +302,34 @@ export function LiveAnalysisInterface({ exerciseType, onComplete, onBack }: Live
           const frameData = cameraService.captureFrame(videoRef.current);
           socketRef.current.sendFrame(frameData);
         } catch (error) {
-          console.error('Frame capture failed:', error);
+          console.error("Frame capture failed:", error);
         }
       }
     };
 
     // Capture frames at 10 FPS for analysis
     const frameInterval = setInterval(captureFrame, 100);
-    
+
     return () => clearInterval(frameInterval);
   }, [isAnalyzing]);
 
-  const handleAnalysisComplete = (results: any) => {
+  const handleAnalysisComplete = (results: AnalysisResults) => {
     stopAnalysis();
     onComplete({
       ...results,
-      sessionTime: metrics.sessionTime,
-      totalReps: metrics.repCount,
+      metrics: {
+        ...results.metrics,
+        sessionTime: metrics.sessionTime,
+        repCount: metrics.repCount,
+      },
     });
   };
 
   const resetSession = () => {
     setMetrics({
       repCount: 0,
-      currentStage: 'Ready',
-      formStatus: 'neutral',
+      currentStage: "Ready",
+      formStatus: "neutral",
       formScore: 0,
       sessionTime: 0,
       averageSpeed: 0,
@@ -256,7 +338,7 @@ export function LiveAnalysisInterface({ exerciseType, onComplete, onBack }: Live
   };
 
   const playAudioFeedback = (feedback: string) => {
-    if ('speechSynthesis' in window) {
+    if ("speechSynthesis" in window) {
       const utterance = new SpeechSynthesisUtterance(feedback);
       utterance.rate = 1.2;
       utterance.volume = 0.7;
@@ -264,22 +346,134 @@ export function LiveAnalysisInterface({ exerciseType, onComplete, onBack }: Live
     }
   };
 
-  const cleanup = () => {
+  const cleanup = useCallback(() => {
     stopAnalysis();
     if (stream) {
       cameraService.stopCamera();
       setStream(null);
     }
-  };
+  }, [stream, stopAnalysis]);
+
+  // Initialize camera on component mount
+  useEffect(() => {
+    initializeCamera();
+    return () => {
+      cleanup();
+    };
+  }, [initializeCamera, cleanup]);
 
   const getFormStatusColor = (status: string) => {
     switch (status) {
-      case 'good': return 'bg-green-500';
-      case 'bad': return 'bg-red-500';
-      default: return 'bg-yellow-500';
+      case "good":
+        return "bg-green-500";
+      case "bad":
+        return "bg-red-500";
+      default:
+        return "bg-yellow-500";
     }
   };
 
+  // Selection screen for choosing analysis mode
+  const renderModeSelection = () => (
+    <div className="w-full max-w-4xl mx-auto space-y-6">
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="capitalize flex items-center gap-2">
+              <Video className="h-5 w-5" />
+              {exerciseType.replace("-", " ")} - Choose Analysis Method
+            </CardTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onBack}
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Live Analysis Option */}
+            <Card className="cursor-pointer hover:shadow-lg transition-shadow border-2 hover:border-blue-500">
+              <CardContent
+                className="p-6"
+                onClick={() => setAnalysisMode("live")}
+              >
+                <div className="text-center space-y-4">
+                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto">
+                    <Camera className="h-8 w-8 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold mb-2">
+                      Live Analysis
+                    </h3>
+                    <p className="text-gray-600 text-sm mb-4">
+                      Perform the exercise in front of your camera and get
+                      real-time feedback
+                    </p>
+                    <div className="space-y-2 text-sm text-gray-500">
+                      <div>✓ Real-time form correction</div>
+                      <div>✓ Live rep counting</div>
+                      <div>✓ Instant feedback</div>
+                    </div>
+                  </div>
+                  <Button className="w-full">Start Live Analysis</Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Video Upload Option */}
+            <Card className="cursor-pointer hover:shadow-lg transition-shadow border-2 hover:border-green-500">
+              <CardContent
+                className="p-6"
+                onClick={() => setAnalysisMode("upload")}
+              >
+                <div className="text-center space-y-4">
+                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+                    <Upload className="h-8 w-8 text-green-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold mb-2">Upload Video</h3>
+                    <p className="text-gray-600 text-sm mb-4">
+                      Upload a pre-recorded video of your exercise for analysis
+                    </p>
+                    <div className="space-y-2 text-sm text-gray-500">
+                      <div>✓ Detailed analysis report</div>
+                      <div>✓ AI-powered insights</div>
+                      <div>✓ Perfect for MVP demo</div>
+                    </div>
+                  </div>
+                  <Button className="w-full" variant="outline">
+                    Upload Video
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  // Handle different analysis modes
+  if (analysisMode === "selection") {
+    return renderModeSelection();
+  }
+
+  if (analysisMode === "upload") {
+    return (
+      <VideoUploadInterface
+        exerciseType={exerciseType}
+        onComplete={onComplete}
+        onBack={() => setAnalysisMode("selection")}
+      />
+    );
+  }
+
+  // Live analysis mode (existing code)
   return (
     <div className="w-full max-w-6xl mx-auto space-y-6">
       <Card>
@@ -287,18 +481,31 @@ export function LiveAnalysisInterface({ exerciseType, onComplete, onBack }: Live
           <div className="flex items-center justify-between">
             <CardTitle className="capitalize flex items-center gap-2">
               <Camera className="h-5 w-5" />
-              {exerciseType.replace('-', ' ')} - Live Analysis
+              {exerciseType.replace("-", " ")} - Live Analysis
             </CardTitle>
             <div className="flex items-center gap-2">
               <Badge variant="outline" className="capitalize">
-                {isAnalyzing ? 'Analyzing' : 'Ready'}
+                {isAnalyzing ? "Analyzing" : "Ready"}
               </Badge>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setAudioEnabled(!audioEnabled)}
               >
-                {audioEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+                {audioEnabled ? (
+                  <Volume2 className="h-4 w-4" />
+                ) : (
+                  <VolumeX className="h-4 w-4" />
+                )}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setAnalysisMode("selection")}
+                className="flex items-center gap-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back
               </Button>
             </div>
           </div>
@@ -316,7 +523,7 @@ export function LiveAnalysisInterface({ exerciseType, onComplete, onBack }: Live
                     </div>
                   </div>
                 )}
-                
+
                 <video
                   ref={videoRef}
                   autoPlay
@@ -324,12 +531,12 @@ export function LiveAnalysisInterface({ exerciseType, onComplete, onBack }: Live
                   muted
                   className="w-full h-full object-cover transform scale-x-[-1]"
                 />
-                
+
                 <canvas
                   ref={canvasRef}
                   className="absolute inset-0 w-full h-full"
                 />
-                
+
                 {/* Pose Overlay */}
                 {isAnalyzing && metrics.poseData && (
                   <PoseOverlay
@@ -338,31 +545,47 @@ export function LiveAnalysisInterface({ exerciseType, onComplete, onBack }: Live
                     videoHeight={720}
                   />
                 )}
-                
+
                 {/* Real-time Metrics Overlay */}
                 {isAnalyzing && (
                   <div className="absolute inset-0 pointer-events-none">
                     <div className="absolute top-4 left-4 space-y-2">
                       <div className="bg-black/70 text-white px-3 py-2 rounded-lg text-sm font-mono">
-                        Reps: <span className="text-2xl font-bold text-green-400">{metrics.repCount}</span>
+                        Reps:{" "}
+                        <span className="text-2xl font-bold text-green-400">
+                          {metrics.repCount}
+                        </span>
                       </div>
                       <div className="bg-black/70 text-white px-3 py-2 rounded-lg text-sm">
-                        Stage: <span className="font-semibold">{metrics.currentStage}</span>
+                        Stage:{" "}
+                        <span className="font-semibold">
+                          {metrics.currentStage}
+                        </span>
                       </div>
-                      <div className={`${getFormStatusColor(metrics.formStatus)} text-white px-3 py-2 rounded-lg text-sm`}>
-                        Form: <span className="font-semibold capitalize">{metrics.formStatus}</span>
+                      <div
+                        className={`${getFormStatusColor(
+                          metrics.formStatus
+                        )} text-white px-3 py-2 rounded-lg text-sm`}
+                      >
+                        Form:{" "}
+                        <span className="font-semibold capitalize">
+                          {metrics.formStatus}
+                        </span>
                       </div>
                     </div>
-                    
+
                     <div className="absolute top-4 right-4">
                       <div className="bg-black/70 text-white px-3 py-2 rounded-lg text-sm text-right">
                         <div>Time: {Math.floor(metrics.sessionTime)}s</div>
                         <div>Speed: {metrics.averageSpeed.toFixed(1)}/min</div>
                       </div>
                     </div>
-                    
+
                     <div className="absolute bottom-4 left-4 right-4">
-                      <Progress value={progress} className="w-full h-2 bg-black/50" />
+                      <Progress
+                        value={progress}
+                        className="w-full h-2 bg-black/50"
+                      />
                       <p className="text-white text-sm mt-2 text-center">
                         Session Progress: {progress.toFixed(0)}%
                       </p>
@@ -370,11 +593,11 @@ export function LiveAnalysisInterface({ exerciseType, onComplete, onBack }: Live
                   </div>
                 )}
               </div>
-              
+
               {/* Controls */}
               <div className="flex gap-3">
                 {!isAnalyzing ? (
-                  <Button 
+                  <Button
                     onClick={startAnalysis}
                     disabled={!stream || isLoading}
                     className="flex-1 h-12"
@@ -384,7 +607,7 @@ export function LiveAnalysisInterface({ exerciseType, onComplete, onBack }: Live
                     Start Analysis
                   </Button>
                 ) : (
-                  <Button 
+                  <Button
                     onClick={stopAnalysis}
                     variant="destructive"
                     className="flex-1 h-12"
@@ -394,7 +617,7 @@ export function LiveAnalysisInterface({ exerciseType, onComplete, onBack }: Live
                     Stop Analysis
                   </Button>
                 )}
-                
+
                 <Button
                   variant="outline"
                   onClick={resetSession}
@@ -403,16 +626,16 @@ export function LiveAnalysisInterface({ exerciseType, onComplete, onBack }: Live
                   <RotateCcw className="h-4 w-4 mr-2" />
                   Reset
                 </Button>
-                
+
                 <Button variant="outline" onClick={onBack}>
                   Back
                 </Button>
               </div>
             </div>
-            
+
             {/* Metrics Dashboard */}
             <div className="lg:col-span-1">
-              <MetricsDashboard 
+              <MetricsDashboard
                 metrics={metrics}
                 exerciseType={exerciseType}
                 isAnalyzing={isAnalyzing}

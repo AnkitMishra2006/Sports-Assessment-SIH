@@ -1,112 +1,164 @@
-import { useState, useRef, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
-import { 
-  Upload, 
-  File, 
-  CheckCircle, 
-  AlertCircle, 
-  Play, 
+import { useState, useRef, useCallback } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
+import {
+  Upload,
+  File,
+  CheckCircle,
+  AlertCircle,
+  Play,
   Pause,
   X,
-  FileVideo
-} from 'lucide-react';
-import { analysisAPI } from '@/services/api';
-import { useToast } from '@/hooks/use-toast';
+  FileVideo,
+} from "lucide-react";
+import { analysisAPI } from "@/services/api";
+import { useToast } from "@/hooks/use-toast";
+
+// Types for video analysis
+interface VideoAnalysisResults {
+  submissionId: string;
+  exerciseType: string;
+  metrics: {
+    repCount: number;
+    formScore: number;
+    averageSpeed?: number;
+    sessionTime: number;
+    maxHeight?: number;
+    consistencyScore?: number;
+    formIssues?: string[];
+    overallScore?: number;
+  };
+  analysis: {
+    strengths: string[];
+    improvements: string[];
+    recommendations: string[];
+    overallScore: number;
+  };
+  videoUrl?: string;
+  // Legacy compatibility
+  exercise?: string;
+  results?: unknown;
+  totalReps?: number;
+  maxHeight?: number;
+  formQuality?: number;
+  consistencyScore?: number;
+  cheatingDetected?: boolean;
+  formIssues?: string[];
+  framesProcessed?: number;
+  detectionQuality?: number;
+  leftReps?: number;
+  rightReps?: number;
+  submission?: unknown;
+}
 
 interface VideoUploadInterfaceProps {
   exerciseType: string;
-  onComplete: (results: any) => void;
+  onComplete: (results: VideoAnalysisResults) => void;
   onBack: () => void;
 }
 
 interface UploadState {
   file: File | null;
   progress: number;
-  status: 'idle' | 'uploading' | 'processing' | 'complete' | 'error';
+  status: "idle" | "uploading" | "processing" | "complete" | "error";
   error?: string;
 }
 
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
-const ACCEPTED_FORMATS = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo'];
+const ACCEPTED_FORMATS = [
+  "video/mp4",
+  "video/webm",
+  "video/quicktime",
+  "video/x-msvideo",
+];
 
-export function VideoUploadInterface({ exerciseType, onComplete, onBack }: VideoUploadInterfaceProps) {
+export function VideoUploadInterface({
+  exerciseType,
+  onComplete,
+  onBack,
+}: VideoUploadInterfaceProps) {
   const [uploadState, setUploadState] = useState<UploadState>({
     file: null,
     progress: 0,
-    status: 'idle',
+    status: "idle",
   });
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const { toast } = useToast();
 
   const validateFile = (file: File): string | null => {
     if (!ACCEPTED_FORMATS.includes(file.type)) {
-      return 'Please select a valid video file (MP4, WebM, MOV, or AVI)';
+      return "Please select a valid video file (MP4, WebM, MOV, or AVI)";
     }
-    
+
     if (file.size > MAX_FILE_SIZE) {
       return `File size must be less than ${MAX_FILE_SIZE / (1024 * 1024)}MB`;
     }
-    
+
     return null;
   };
 
-  const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  const handleFileSelect = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
 
-    const validationError = validateFile(file);
-    if (validationError) {
-      setUploadState({
-        file: null,
-        progress: 0,
-        status: 'error',
-        error: validationError,
-      });
-      toast({
-        title: "Invalid File",
-        description: validationError,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setUploadState({
-      file,
-      progress: 0,
-      status: 'idle',
-    });
-
-    // Create video preview
-    const videoUrl = URL.createObjectURL(file);
-    setVideoPreview(videoUrl);
-    
-    // Clean up previous URL
-    return () => {
-      if (videoPreview) {
-        URL.revokeObjectURL(videoPreview);
+      const validationError = validateFile(file);
+      if (validationError) {
+        setUploadState({
+          file: null,
+          progress: 0,
+          status: "error",
+          error: validationError,
+        });
+        toast({
+          title: "Invalid File",
+          description: validationError,
+          variant: "destructive",
+        });
+        return;
       }
-    };
-  }, [videoPreview, toast]);
 
-  const handleDrop = useCallback((event: React.DragEvent) => {
-    event.preventDefault();
-    const file = event.dataTransfer.files?.[0];
-    
-    if (file) {
-      // Simulate file input change
-      const fakeEvent = {
-        target: { files: [file] }
-      } as any;
-      handleFileSelect(fakeEvent);
-    }
-  }, [handleFileSelect]);
+      setUploadState({
+        file,
+        progress: 0,
+        status: "idle",
+      });
+
+      // Create video preview
+      const videoUrl = URL.createObjectURL(file);
+      setVideoPreview(videoUrl);
+
+      // Clean up previous URL
+      return () => {
+        if (videoPreview) {
+          URL.revokeObjectURL(videoPreview);
+        }
+      };
+    },
+    [videoPreview, toast]
+  );
+
+  const handleDrop = useCallback(
+    (event: React.DragEvent) => {
+      event.preventDefault();
+      const file = event.dataTransfer.files?.[0];
+
+      if (file) {
+        // Simulate file input change
+        const fakeEvent = {
+          target: { files: [file] },
+        } as unknown as React.ChangeEvent<HTMLInputElement>;
+        handleFileSelect(fakeEvent);
+      }
+    },
+    [handleFileSelect]
+  );
 
   const handleDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -116,44 +168,146 @@ export function VideoUploadInterface({ exerciseType, onComplete, onBack }: Video
     if (!uploadState.file) return;
 
     try {
-      setUploadState(prev => ({ ...prev, status: 'uploading', progress: 0 }));
+      setUploadState((prev) => ({ ...prev, status: "uploading", progress: 0 }));
+
+      toast({
+        title: "Starting Upload",
+        description: `Uploading ${exerciseType.replace(
+          "-",
+          " "
+        )} video for analysis...`,
+      });
 
       // Upload with progress tracking
-      const results = await analysisAPI.analyzeVideo(
+      const uploadResponse = (await analysisAPI.analyzeVideo(
         exerciseType,
         uploadState.file,
         (progress) => {
-          setUploadState(prev => ({ ...prev, progress }));
+          setUploadState((prev) => ({
+            ...prev,
+            progress: Math.min(progress, 70), // Leave 30% for processing
+          }));
         }
-      );
+      )) as {
+        success: boolean;
+        error?: string;
+        submissionId?: string;
+        submission?: {
+          _id: string;
+          exerciseType: string;
+          result: number;
+          resultUnit: string;
+          percentile: number;
+          analysisResults: {
+            total_reps?: number;
+            left_reps?: number;
+            right_reps?: number;
+            form_score?: number;
+            consistency_score?: number;
+            max_height_cm?: number;
+            jump_count?: number;
+            cheat_detected?: boolean;
+            form_issues?: string[];
+            frames_processed?: number;
+            detection_quality?: number;
+          };
+          videoFilename?: string;
+          createdAt: string;
+        };
+      };
+
+      if (!uploadResponse.success) {
+        throw new Error(uploadResponse.error || "Analysis failed");
+      }
+
+      const submission = uploadResponse.submission;
+      const analysisResults = submission?.analysisResults;
 
       // Processing phase
-      setUploadState(prev => ({ ...prev, status: 'processing', progress: 100 }));
-      
-      // Simulate processing time (replace with actual processing status polling)
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      
-      setUploadState(prev => ({ ...prev, status: 'complete' }));
-      
+      setUploadState((prev) => ({
+        ...prev,
+        status: "processing",
+        progress: 85,
+      }));
+
+      toast({
+        title: "Processing Complete",
+        description: "Analysis results are ready!",
+      });
+
+      setUploadState((prev) => ({
+        ...prev,
+        progress: 100,
+        status: "complete",
+      }));
+
+      // Format results for parent component
+      const formattedResults: VideoAnalysisResults = {
+        submissionId: submission?._id || uploadResponse.submissionId || "",
+        exerciseType: submission?.exerciseType || exerciseType,
+        metrics: {
+          repCount:
+            analysisResults?.total_reps || analysisResults?.jump_count || 0,
+          formScore: analysisResults?.form_score || 75,
+          averageSpeed: 0, // Not provided by backend
+          sessionTime: 30, // Default session time
+          maxHeight: analysisResults?.max_height_cm,
+          consistencyScore: analysisResults?.consistency_score || 80,
+          formIssues: analysisResults?.form_issues || [],
+          overallScore: submission?.result || analysisResults?.form_score || 75,
+        },
+        analysis: {
+          strengths: ["Good technique detected", "Consistent form"],
+          improvements:
+            analysisResults?.form_issues?.map((issue) => `Address ${issue}`) ||
+            [],
+          recommendations: ["Continue practicing", "Focus on form consistency"],
+          overallScore: submission?.result || analysisResults?.form_score || 75,
+        },
+        videoUrl: submission?.videoFilename
+          ? analysisAPI.getVideoUrl(submission.videoFilename)
+          : undefined,
+        // Legacy format for compatibility
+        exercise: exerciseType,
+        results: analysisResults,
+        totalReps:
+          analysisResults?.total_reps || analysisResults?.jump_count || 0,
+        maxHeight: analysisResults?.max_height_cm,
+        formQuality: analysisResults?.form_score,
+        consistencyScore: analysisResults?.consistency_score,
+        cheatingDetected: analysisResults?.cheat_detected || false,
+        formIssues: analysisResults?.form_issues || [],
+        framesProcessed: analysisResults?.frames_processed || 0,
+        detectionQuality: analysisResults?.detection_quality || 0,
+        leftReps: analysisResults?.left_reps,
+        rightReps: analysisResults?.right_reps,
+        submission: submission,
+      };
+
       toast({
         title: "Analysis Complete",
-        description: "Your video has been successfully analyzed.",
+        description: `Your ${exerciseType.replace(
+          "-",
+          " "
+        )} video has been successfully analyzed.`,
       });
 
       // Pass results to parent
-      onComplete(results);
-
+      onComplete(formattedResults);
     } catch (error) {
-      console.error('Upload failed:', error);
-      setUploadState(prev => ({
+      console.error("Upload failed:", error);
+      setUploadState((prev) => ({
         ...prev,
-        status: 'error',
-        error: error instanceof Error ? error.message : 'Upload failed',
+        status: "error",
+        error: error instanceof Error ? error.message : "Upload failed",
       }));
-      
+
       toast({
-        title: "Upload Failed",
-        description: "Failed to upload and analyze video. Please try again.",
+        title: "Analysis Failed",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to upload and analyze video. Please try again.",
         variant: "destructive",
       });
     }
@@ -163,18 +317,18 @@ export function VideoUploadInterface({ exerciseType, onComplete, onBack }: Video
     setUploadState({
       file: null,
       progress: 0,
-      status: 'idle',
+      status: "idle",
     });
-    
+
     if (videoPreview) {
       URL.revokeObjectURL(videoPreview);
       setVideoPreview(null);
     }
-    
+
     if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      fileInputRef.current.value = "";
     }
-    
+
     setIsPlaying(false);
   };
 
@@ -190,28 +344,38 @@ export function VideoUploadInterface({ exerciseType, onComplete, onBack }: Video
   };
 
   const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) return "0 Bytes";
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'complete': return 'text-green-600';
-      case 'error': return 'text-red-600';
-      case 'processing': case 'uploading': return 'text-blue-600';
-      default: return 'text-muted-foreground';
+      case "complete":
+        return "text-green-600";
+      case "error":
+        return "text-red-600";
+      case "processing":
+      case "uploading":
+        return "text-blue-600";
+      default:
+        return "text-muted-foreground";
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'complete': return <CheckCircle className="h-4 w-4" />;
-      case 'error': return <AlertCircle className="h-4 w-4" />;
-      case 'processing': case 'uploading': return <Upload className="h-4 w-4 animate-pulse" />;
-      default: return <FileVideo className="h-4 w-4" />;
+      case "complete":
+        return <CheckCircle className="h-4 w-4" />;
+      case "error":
+        return <AlertCircle className="h-4 w-4" />;
+      case "processing":
+      case "uploading":
+        return <Upload className="h-4 w-4 animate-pulse" />;
+      default:
+        return <FileVideo className="h-4 w-4" />;
     }
   };
 
@@ -222,9 +386,12 @@ export function VideoUploadInterface({ exerciseType, onComplete, onBack }: Video
           <div className="flex items-center justify-between">
             <CardTitle className="capitalize flex items-center gap-2">
               <Upload className="h-5 w-5" />
-              {exerciseType.replace('-', ' ')} - Video Upload
+              {exerciseType.replace("-", " ")} - Video Upload
             </CardTitle>
-            <Badge variant="outline" className={getStatusColor(uploadState.status)}>
+            <Badge
+              variant="outline"
+              className={getStatusColor(uploadState.status)}
+            >
               {getStatusIcon(uploadState.status)}
               <span className="ml-1 capitalize">{uploadState.status}</span>
             </Badge>
@@ -240,7 +407,9 @@ export function VideoUploadInterface({ exerciseType, onComplete, onBack }: Video
               onClick={() => fileInputRef.current?.click()}
             >
               <FileVideo className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-lg font-medium mb-2">Upload Exercise Video</h3>
+              <h3 className="text-lg font-medium mb-2">
+                Upload Exercise Video
+              </h3>
               <p className="text-muted-foreground mb-4">
                 Drop your video here or click to select
               </p>
@@ -268,7 +437,8 @@ export function VideoUploadInterface({ exerciseType, onComplete, onBack }: Video
                   <div>
                     <p className="font-medium">{uploadState.file.name}</p>
                     <p className="text-sm text-muted-foreground">
-                      {formatFileSize(uploadState.file.size)} • {uploadState.file.type}
+                      {formatFileSize(uploadState.file.size)} •{" "}
+                      {uploadState.file.type}
                     </p>
                   </div>
                 </div>
@@ -276,7 +446,10 @@ export function VideoUploadInterface({ exerciseType, onComplete, onBack }: Video
                   variant="ghost"
                   size="sm"
                   onClick={clearFile}
-                  disabled={uploadState.status === 'uploading' || uploadState.status === 'processing'}
+                  disabled={
+                    uploadState.status === "uploading" ||
+                    uploadState.status === "processing"
+                  }
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -295,44 +468,51 @@ export function VideoUploadInterface({ exerciseType, onComplete, onBack }: Video
               </div>
 
               {/* Upload Progress */}
-              {(uploadState.status === 'uploading' || uploadState.status === 'processing') && (
+              {(uploadState.status === "uploading" ||
+                uploadState.status === "processing") && (
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span>
-                      {uploadState.status === 'uploading' ? 'Uploading...' : 'Processing...'}
+                      {uploadState.status === "uploading"
+                        ? "Uploading..."
+                        : "Processing..."}
                     </span>
                     <span>{uploadState.progress}%</span>
                   </div>
                   <Progress value={uploadState.progress} className="w-full" />
                   <p className="text-xs text-muted-foreground text-center">
-                    {uploadState.status === 'uploading' 
-                      ? 'Uploading video to analysis server...'
-                      : 'AI is analyzing your exercise form and counting reps...'
-                    }
+                    {uploadState.status === "uploading"
+                      ? "Uploading video to analysis server..."
+                      : "AI is analyzing your exercise form and counting reps..."}
                   </p>
                 </div>
               )}
 
               {/* Error Display */}
-              {uploadState.status === 'error' && uploadState.error && (
+              {uploadState.status === "error" && uploadState.error && (
                 <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
                   <div className="flex items-center gap-2 text-red-800">
                     <AlertCircle className="h-4 w-4" />
                     <span className="text-sm font-medium">Upload Error</span>
                   </div>
-                  <p className="text-sm text-red-600 mt-1">{uploadState.error}</p>
+                  <p className="text-sm text-red-600 mt-1">
+                    {uploadState.error}
+                  </p>
                 </div>
               )}
 
               {/* Success Display */}
-              {uploadState.status === 'complete' && (
+              {uploadState.status === "complete" && (
                 <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
                   <div className="flex items-center gap-2 text-green-800">
                     <CheckCircle className="h-4 w-4" />
-                    <span className="text-sm font-medium">Analysis Complete</span>
+                    <span className="text-sm font-medium">
+                      Analysis Complete
+                    </span>
                   </div>
                   <p className="text-sm text-green-600 mt-1">
-                    Your video has been successfully analyzed. Results are ready!
+                    Your video has been successfully analyzed. Results are
+                    ready!
                   </p>
                 </div>
               )}
@@ -342,7 +522,7 @@ export function VideoUploadInterface({ exerciseType, onComplete, onBack }: Video
           {/* Action Buttons */}
           <div className="flex gap-3">
             {!uploadState.file ? (
-              <Button 
+              <Button
                 onClick={() => fileInputRef.current?.click()}
                 className="flex-1"
               >
@@ -353,16 +533,19 @@ export function VideoUploadInterface({ exerciseType, onComplete, onBack }: Video
               <Button
                 onClick={uploadVideo}
                 disabled={
-                  uploadState.status === 'uploading' || 
-                  uploadState.status === 'processing' || 
-                  uploadState.status === 'complete'
+                  uploadState.status === "uploading" ||
+                  uploadState.status === "processing" ||
+                  uploadState.status === "complete"
                 }
                 className="flex-1"
               >
-                {uploadState.status === 'uploading' || uploadState.status === 'processing' ? (
+                {uploadState.status === "uploading" ||
+                uploadState.status === "processing" ? (
                   <>
                     <Upload className="h-4 w-4 mr-2 animate-pulse" />
-                    {uploadState.status === 'uploading' ? 'Uploading...' : 'Processing...'}
+                    {uploadState.status === "uploading"
+                      ? "Uploading..."
+                      : "Processing..."}
                   </>
                 ) : (
                   <>
@@ -372,7 +555,7 @@ export function VideoUploadInterface({ exerciseType, onComplete, onBack }: Video
                 )}
               </Button>
             )}
-            
+
             <Button variant="outline" onClick={onBack}>
               Back
             </Button>

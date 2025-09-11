@@ -11,6 +11,7 @@ import {
   Trophy, 
   User, 
   Calendar, 
+  MapPin, 
   Award, 
   TrendingUp, 
   Target,
@@ -181,12 +182,13 @@ const AthleteProfile = () => {
   const testHistory = athleteData.performanceData.testHistory;
   const overallScore = athleteData.performanceData.overallFitnessScore;
   const completedTests = testHistory.length;
+  const totalTests = 5; // Assuming 5 total tests
 
   const getBadges = () => {
     const badges = [];
     if (overallScore >= 90) badges.push({ name: "Elite Performer", color: "bg-gradient-to-r from-yellow-400 to-orange-500", icon: Trophy });
     if (overallScore >= 80) badges.push({ name: "Top Athlete", color: "bg-gradient-to-r from-blue-400 to-purple-500", icon: Award });
-    if (completedTests >= 3) badges.push({ name: "Test Completion", color: "bg-gradient-to-r from-green-400 to-blue-500", icon: CheckCircle });
+    if (completedTests >= totalTests) badges.push({ name: "Test Completion", color: "bg-gradient-to-r from-green-400 to-blue-500", icon: CheckCircle });
     if (testHistory.length >= 10) badges.push({ name: "Dedicated Trainee", color: "bg-gradient-to-r from-purple-400 to-pink-500", icon: Star });
     return badges;
   };
