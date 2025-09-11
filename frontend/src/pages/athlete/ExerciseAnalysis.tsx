@@ -217,7 +217,35 @@ export default function ExerciseAnalysis() {
         )}
 
         {appState === "analysis" && selectedExercise && (
-          <>
+          <div className="space-y-6">
+            {/* Analysis Method Toggle */}
+            <div className="flex justify-center">
+              <div className="bg-muted p-1 rounded-lg">
+                <div className="grid grid-cols-2 gap-1">
+                  <button
+                    onClick={() => setSelectedMode("live")}
+                    className={`px-6 py-3 rounded-md text-sm font-medium transition-all ${
+                      selectedMode === "live"
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    📹 Live Camera
+                  </button>
+                  <button
+                    onClick={() => setSelectedMode("upload")}
+                    className={`px-6 py-3 rounded-md text-sm font-medium transition-all ${
+                      selectedMode === "upload"
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    📁 Upload Video
+                  </button>
+                </div>
+              </div>
+            </div>
+
             {selectedMode === "live" ? (
               <LiveAnalysisInterface
                 exerciseType={selectedExercise}
@@ -231,7 +259,7 @@ export default function ExerciseAnalysis() {
                 onBack={handleBack}
               />
             )}
-          </>
+          </div>
         )}
 
         {appState === "results" &&

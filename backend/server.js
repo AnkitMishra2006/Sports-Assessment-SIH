@@ -2,14 +2,14 @@ const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
 
+// Load environment variables
+dotenv.config();
+
 // Import database connection
 const database = require("./config/database");
 
 // Import models (this will help ensure they're registered with Mongoose)
 require("./models");
-
-// Load environment variables
-dotenv.config();
 
 // Create Express app
 const app = express();
@@ -209,10 +209,18 @@ app.use((err, req, res, next) => {
 // Start server function
 async function startServer() {
   try {
-    // Connect to MongoDB first
-    await database.connect();
+    // Try to connect to MongoDB, but continue even if it fails (demo mode)
+    try {
+      await database.connect();
+      console.log("✅ MongoDB connected successfully");
+    } catch (dbError) {
+      console.log(
+        "⚠️  MongoDB connection failed - Running in DEMO mode without database"
+      );
+      console.log("📝 Note: All data will be simulated for demo purposes");
+    }
 
-    // Start the server
+    // Start the server regardless of database connection
     const server = app.listen(port, () => {
       console.log("\n🚀 ==========================================");
       console.log("🏟️  Sports Assessment Platform Server");
@@ -221,6 +229,9 @@ async function startServer() {
       console.log(`🌍 Environment: ${process.env.NODE_ENV || "development"}`);
       console.log(`🔗 API URL: http://localhost:${port}/api`);
       console.log(`❤️  Health Check: http://localhost:${port}/health`);
+      console.log(
+        "🎯 DEMO MODE: Both camera and video upload analysis available!"
+      );
       console.log("==========================================\n");
     });
 

@@ -296,6 +296,42 @@ export const analysisAPI = {
       body: JSON.stringify(analysisData),
     });
   },
+
+  // Live analysis functions
+  startLiveSession: async (exerciseType: string) => {
+    return apiRequest("/analysis/analyze-live", {
+      method: "POST",
+      body: JSON.stringify({ exerciseType }),
+    });
+  },
+
+  processFrame: async (
+    sessionId: string,
+    frameData: string,
+    exerciseType: string
+  ) => {
+    return apiRequest("/analysis/process-frame", {
+      method: "POST",
+      body: JSON.stringify({
+        sessionId,
+        frameData,
+        exerciseType,
+      }),
+    });
+  },
+
+  endLiveSession: async (
+    sessionId: string,
+    finalResults?: Record<string, unknown>
+  ) => {
+    return apiRequest("/analysis/end-live-session", {
+      method: "POST",
+      body: JSON.stringify({
+        sessionId,
+        finalResults,
+      }),
+    });
+  },
 };
 
 // Official API

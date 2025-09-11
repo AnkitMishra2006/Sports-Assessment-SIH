@@ -46,9 +46,40 @@ const AthleteDashboard = () => {
   const [athleteData, setAthleteData] = useState<AthleteData | null>(null);
 
   useEffect(() => {
+    // Always set fake demo data for presentation
+    const fakeAthleteData: AthleteData = {
+      name: "Alex Johnson",
+      email: "alex.johnson@demo.com",
+      district: "Delhi Central",
+      dateOfBirth: "1995-06-15",
+      gender: "male",
+      testProgress: {
+        verticalJump: {
+          status: "completed",
+          completedAt: "2024-09-05T10:30:00Z",
+        },
+        sitUps: { status: "completed", completedAt: "2024-09-10T14:20:00Z" },
+        shuttleRun: { status: "in-progress", completedAt: null },
+        enduranceRun: { status: "pending", completedAt: null },
+        pushUps: { status: "completed", completedAt: "2024-09-08T09:15:00Z" },
+        flexibility: { status: "pending", completedAt: null },
+        balance: { status: "pending", completedAt: null },
+        broadJump: { status: "in-progress", completedAt: null },
+      },
+      badges: ["First Test Completed", "High Scorer", "Consistent Performer"],
+    };
+
+    setAthleteData(fakeAthleteData);
+
+    // Optionally check for real data but don't block on it
     const data = localStorage.getItem("athleteData");
     if (data) {
-      setAthleteData(JSON.parse(data));
+      try {
+        const parsedData = JSON.parse(data);
+        setAthleteData(parsedData);
+      } catch (err) {
+        console.log("Using fake demo data instead of localStorage data");
+      }
     }
   }, []);
 
@@ -58,13 +89,10 @@ const AthleteDashboard = () => {
         <Card className="w-full max-w-md shadow-card">
           <CardContent className="text-center py-8">
             <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h2 className="text-2xl font-bold mb-2">No Data Found</h2>
+            <h2 className="text-2xl font-bold mb-2">Loading Dashboard...</h2>
             <p className="text-muted-foreground mb-4">
-              Please login or register to access your dashboard.
+              Preparing your athlete dashboard with demo data.
             </p>
-            <Link to="/athlete/login">
-              <Button>Go to Login</Button>
-            </Link>
           </CardContent>
         </Card>
       </div>
@@ -78,7 +106,7 @@ const AthleteDashboard = () => {
       description: "Explosive power assessment",
       icon: TrendingUp,
       status: athleteData.testProgress.verticalJump?.status || "pending",
-      route: "/athlete/analysis?exercise=vertical-jump",
+      route: "/demo?exercise=vertical-jump",
     },
     {
       id: "sitUps",
@@ -86,7 +114,7 @@ const AthleteDashboard = () => {
       description: "Core strength endurance test",
       icon: Activity,
       status: athleteData.testProgress.sitUps?.status || "pending",
-      route: "/athlete/analysis?exercise=sit-ups",
+      route: "/demo/sit-ups",
     },
     {
       id: "shuttleRun",
@@ -94,7 +122,7 @@ const AthleteDashboard = () => {
       description: "Agility and speed assessment",
       icon: Zap,
       status: athleteData.testProgress.shuttleRun?.status || "pending",
-      route: "/athlete/analysis?exercise=shuttle-run",
+      route: "/demo?exercise=shuttle-run",
     },
     {
       id: "enduranceRun",
@@ -102,7 +130,7 @@ const AthleteDashboard = () => {
       description: "Cardiovascular fitness test",
       icon: Timer,
       status: athleteData.testProgress.enduranceRun?.status || "pending",
-      route: "/athlete/analysis?exercise=endurance-run",
+      route: "/demo?exercise=endurance-run",
     },
     {
       id: "pushUps",
@@ -110,7 +138,7 @@ const AthleteDashboard = () => {
       description: "Upper body strength test",
       icon: Activity,
       status: athleteData.testProgress.pushUps?.status || "pending",
-      route: "/athlete/analysis?exercise=bicep-curls",
+      route: "/demo?exercise=bicep-curls",
     },
     {
       id: "flexibility",
@@ -118,7 +146,7 @@ const AthleteDashboard = () => {
       description: "Sit and reach test",
       icon: User,
       status: athleteData.testProgress.flexibility?.status || "pending",
-      route: "/athlete/analysis?exercise=flexibility",
+      route: "/demo?exercise=flexibility",
     },
     {
       id: "balance",
@@ -165,15 +193,15 @@ const AthleteDashboard = () => {
           <div className="flex items-center space-x-2">
             <Trophy className="h-8 w-8 text-primary" />
             <h1 className="text-2xl font-bold text-primary">
-              SAI Talent Assessment
+              SAI Talent Assessment (Demo)
             </h1>
           </div>
           <div className="flex items-center space-x-4">
             <Badge variant="outline">{athleteData.district}</Badge>
-            <Link to="/athlete/history">
+            <Link to="/demo/history">
               <Button variant="outline">History</Button>
             </Link>
-            <Link to="/athlete/profile">
+            <Link to="/demo/profile">
               <Button variant="outline">Profile</Button>
             </Link>
           </div>

@@ -19,8 +19,8 @@ class DatabaseConnection {
       useNewUrlParser: true,
       useUnifiedTopology: true,
       maxPoolSize: 10, // Maximum number of connections
-      serverSelectionTimeoutMS: 5000, // Keep trying to send operations for 5 seconds
-      socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
+      serverSelectionTimeoutMS: 2000, // Reduce timeout for demo
+      socketTimeoutMS: 10000, // Reduce socket timeout for demo
       family: 4, // Use IPv4, skip trying IPv6
     };
 
@@ -49,7 +49,8 @@ class DatabaseConnection {
       this.isConnected = true;
     } catch (error) {
       console.error("❌ MongoDB connection error:", error.message);
-      process.exit(1);
+      // Don't exit for demo mode - throw error to be caught by server
+      throw error;
     }
   }
 

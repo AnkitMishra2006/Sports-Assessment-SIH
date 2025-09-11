@@ -142,6 +142,64 @@ router.post("/analyze-live", async (req, res) => {
   }
 });
 
+// Process live camera frame
+router.post("/process-frame", async (req, res) => {
+  try {
+    const { sessionId, frameData, exerciseType } = req.body;
+
+    console.log(
+      `DEMO: Processing frame for session ${sessionId}, exercise: ${exerciseType}`
+    );
+
+    // Simulate real-time analysis with varying results
+    const repCount = Math.floor(Math.random() * 15) + 1;
+    const formScore = Math.floor(Math.random() * 30) + 70; // 70-100%
+    const currentStage = Math.random() > 0.5 ? "up" : "down";
+    const formStatus =
+      formScore > 85 ? "good" : formScore > 70 ? "neutral" : "bad";
+
+    const results = {
+      sessionId,
+      exerciseType,
+      repCount,
+      formScore,
+      currentStage,
+      formStatus,
+      confidence: 0.85 + Math.random() * 0.15,
+      timestamp: Date.now(),
+      poseDetected: true,
+      landmarks: generateFakeLandmarks(), // Generate fake pose landmarks for demo
+    };
+
+    res.json({
+      success: true,
+      results,
+    });
+  } catch (error) {
+    console.error("Frame processing error:", error);
+    res.status(500).json({
+      error: "Frame processing failed",
+      message: error.message,
+    });
+  }
+});
+
+// Helper function to generate fake pose landmarks for demo
+function generateFakeLandmarks() {
+  // Generate fake pose landmarks for demo purposes
+  const landmarks = [];
+  for (let i = 0; i < 33; i++) {
+    // 33 pose landmarks in MediaPipe
+    landmarks.push({
+      x: Math.random(),
+      y: Math.random(),
+      z: Math.random() * 0.5,
+      visibility: 0.8 + Math.random() * 0.2,
+    });
+  }
+  return landmarks;
+}
+
 // Get video file
 router.get("/video/:filename", (req, res) => {
   try {

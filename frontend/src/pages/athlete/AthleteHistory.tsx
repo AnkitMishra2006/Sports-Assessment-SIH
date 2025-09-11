@@ -1,14 +1,43 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
-import { 
-  Trophy, 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+} from "recharts";
+import {
+  Trophy,
   TrendingUp,
   Calendar,
   Download,
@@ -20,7 +49,7 @@ import {
   History,
   CheckCircle,
   AlertTriangle,
-  Clock
+  Clock,
 } from "lucide-react";
 import { mockTestHistory, fitnessTests } from "@/data/mockData";
 
@@ -38,9 +67,77 @@ const AthleteHistory = () => {
   const [selectedTimeframe, setSelectedTimeframe] = useState("3months");
 
   useEffect(() => {
+    // Always set fake demo data for presentation
+    const fakeAthleteData = {
+      name: "Alex Johnson",
+      email: "alex.johnson@demo.com",
+      exerciseHistory: [
+        {
+          id: "1",
+          exercise: "sit-ups",
+          date: "2024-09-10T14:20:00Z",
+          reps: 25,
+          formQuality: 88,
+          duration: 120,
+          cheatingDetected: false,
+          mode: "upload",
+        },
+        {
+          id: "2",
+          exercise: "bicep-curls",
+          date: "2024-09-08T09:15:00Z",
+          reps: 18,
+          formQuality: 85,
+          duration: 90,
+          cheatingDetected: false,
+          mode: "live",
+        },
+        {
+          id: "3",
+          exercise: "vertical-jump",
+          date: "2024-09-05T10:30:00Z",
+          reps: 5,
+          formQuality: 92,
+          duration: 30,
+          cheatingDetected: false,
+          mode: "upload",
+        },
+        {
+          id: "4",
+          exercise: "sit-ups",
+          date: "2024-09-03T16:45:00Z",
+          reps: 23,
+          formQuality: 85,
+          duration: 115,
+          cheatingDetected: false,
+          mode: "live",
+        },
+        {
+          id: "5",
+          exercise: "bicep-curls",
+          date: "2024-09-01T11:20:00Z",
+          reps: 16,
+          formQuality: 78,
+          duration: 85,
+          cheatingDetected: false,
+          mode: "upload",
+        },
+      ],
+    };
+
+    setAthleteData(fakeAthleteData);
+
+    // Optionally check for real data but don't block on it
     const data = localStorage.getItem("athleteData");
     if (data) {
-      setAthleteData(JSON.parse(data));
+      try {
+        const parsedData = JSON.parse(data);
+        if (parsedData.exerciseHistory) {
+          setAthleteData(parsedData);
+        }
+      } catch (err) {
+        console.log("Using fake demo data instead of localStorage data");
+      }
     }
   }, []);
 
@@ -50,11 +147,10 @@ const AthleteHistory = () => {
         <Card className="w-full max-w-md shadow-card">
           <CardContent className="text-center py-8">
             <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h2 className="text-2xl font-bold mb-2">No Data Found</h2>
-            <p className="text-muted-foreground mb-4">Please login to access your history.</p>
-            <Link to="/athlete/login">
-              <Button>Go to Login</Button>
-            </Link>
+            <h2 className="text-2xl font-bold mb-2">Loading History...</h2>
+            <p className="text-muted-foreground mb-4">
+              Preparing your exercise history with demo data.
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -62,70 +158,102 @@ const AthleteHistory = () => {
   }
 
   // Mock history data - in a real app this would come from API
-  const testHistory: TestHistoryEntry[] = (mockTestHistory[0]?.history || []).map(entry => ({
+  const testHistory: TestHistoryEntry[] = (
+    mockTestHistory[0]?.history || []
+  ).map((entry) => ({
     ...entry,
-    status: entry.status as "verified" | "pending" | "flagged"
+    status: entry.status as "verified" | "pending" | "flagged",
   }));
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "verified": return CheckCircle;
-      case "flagged": return AlertTriangle;
-      default: return Clock;
+      case "verified":
+        return CheckCircle;
+      case "flagged":
+        return AlertTriangle;
+      default:
+        return Clock;
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "verified": return "success";
-      case "flagged": return "warning";
-      default: return "secondary";
+      case "verified":
+        return "success";
+      case "flagged":
+        return "warning";
+      default:
+        return "secondary";
     }
   };
 
-  const filteredHistory = testHistory.filter(entry => {
+  const filteredHistory = testHistory.filter((entry) => {
     if (selectedTest !== "all" && entry.testId !== selectedTest) return false;
-    
+
     const entryDate = new Date(entry.date);
     const now = new Date();
-    const timeframeDays = selectedTimeframe === "1month" ? 30 : 
-                         selectedTimeframe === "3months" ? 90 : 
-                         selectedTimeframe === "6months" ? 180 : 365;
-    
-    const cutoffDate = new Date(now.getTime() - (timeframeDays * 24 * 60 * 60 * 1000));
+    const timeframeDays =
+      selectedTimeframe === "1month"
+        ? 30
+        : selectedTimeframe === "3months"
+        ? 90
+        : selectedTimeframe === "6months"
+        ? 180
+        : 365;
+
+    const cutoffDate = new Date(
+      now.getTime() - timeframeDays * 24 * 60 * 60 * 1000
+    );
     return entryDate >= cutoffDate;
   });
 
   // Prepare chart data
   const chartData = filteredHistory
-    .filter(entry => selectedTest === "all" || entry.testId === selectedTest)
+    .filter((entry) => selectedTest === "all" || entry.testId === selectedTest)
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    .map(entry => ({
-      date: new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    .map((entry) => ({
+      date: new Date(entry.date).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      }),
       percentile: entry.percentile,
       result: entry.result,
-      testName: fitnessTests.find(t => t.id === entry.testId)?.name || entry.testId
+      testName:
+        fitnessTests.find((t) => t.id === entry.testId)?.name || entry.testId,
     }));
 
   // Performance summary
-  const performanceSummary = fitnessTests.map(test => {
-    const testEntries = filteredHistory.filter(entry => entry.testId === test.id);
-    if (testEntries.length === 0) return null;
+  const performanceSummary = fitnessTests
+    .map((test) => {
+      const testEntries = filteredHistory.filter(
+        (entry) => entry.testId === test.id
+      );
+      if (testEntries.length === 0) return null;
 
-    const latest = testEntries[testEntries.length - 1];
-    const previous = testEntries.length > 1 ? testEntries[testEntries.length - 2] : null;
-    const improvement = previous ? latest.percentile - previous.percentile : 0;
+      const latest = testEntries[testEntries.length - 1];
+      const previous =
+        testEntries.length > 1 ? testEntries[testEntries.length - 2] : null;
+      const improvement = previous
+        ? latest.percentile - previous.percentile
+        : 0;
 
-    return {
-      testName: test.name,
-      latest: latest.result,
-      percentile: latest.percentile,
-      improvement,
-      attempts: testEntries.length
-    };
-  }).filter(Boolean);
+      return {
+        testName: test.name,
+        latest: latest.result,
+        percentile: latest.percentile,
+        improvement,
+        attempts: testEntries.length,
+      };
+    })
+    .filter(Boolean);
 
-  const badges = ["Top Performer", "Speed Demon", "Endurance Warrior", "Balance Master", "Strength Champion"];
+  const badges = [
+    "Top Performer",
+    "Speed Demon",
+    "Endurance Warrior",
+    "Balance Master",
+    "Strength Champion",
+  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -134,7 +262,9 @@ const AthleteHistory = () => {
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-2">
             <History className="h-8 w-8 text-primary" />
-            <h1 className="text-2xl font-bold text-primary">Performance History</h1>
+            <h1 className="text-2xl font-bold text-primary">
+              Performance History
+            </h1>
           </div>
           <div className="flex items-center space-x-4">
             <Link to="/athlete/dashboard">
@@ -165,14 +295,19 @@ const AthleteHistory = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Tests</SelectItem>
-                    {fitnessTests.map(test => (
-                      <SelectItem key={test.id} value={test.id}>{test.name}</SelectItem>
+                    {fitnessTests.map((test) => (
+                      <SelectItem key={test.id} value={test.id}>
+                        {test.name}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Select value={selectedTimeframe} onValueChange={setSelectedTimeframe}>
+                <Select
+                  value={selectedTimeframe}
+                  onValueChange={setSelectedTimeframe}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select Timeframe" />
                   </SelectTrigger>
@@ -208,14 +343,24 @@ const AthleteHistory = () => {
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between mb-2">
                       <Activity className="h-5 w-5 text-primary" />
-                      <Badge variant={summary.improvement > 0 ? "default" : "secondary"}>
-                        {summary.improvement > 0 ? '+' : ''}{summary.improvement}%
+                      <Badge
+                        variant={
+                          summary.improvement > 0 ? "default" : "secondary"
+                        }
+                      >
+                        {summary.improvement > 0 ? "+" : ""}
+                        {summary.improvement}%
                       </Badge>
                     </div>
-                    <h3 className="font-semibold text-sm mb-1">{summary.testName}</h3>
-                    <p className="text-2xl font-bold text-primary mb-1">{summary.latest}</p>
+                    <h3 className="font-semibold text-sm mb-1">
+                      {summary.testName}
+                    </h3>
+                    <p className="text-2xl font-bold text-primary mb-1">
+                      {summary.latest}
+                    </p>
                     <p className="text-sm text-muted-foreground">
-                      {summary.percentile}th percentile • {summary.attempts} attempts
+                      {summary.percentile}th percentile • {summary.attempts}{" "}
+                      attempts
                     </p>
                   </CardContent>
                 </Card>
@@ -227,23 +372,36 @@ const AthleteHistory = () => {
               <Card className="shadow-card">
                 <CardContent className="p-6 text-center">
                   <Target className="h-8 w-8 text-primary mx-auto mb-2" />
-                  <div className="text-2xl font-bold text-primary">{testHistory.length}</div>
-                  <p className="text-sm text-muted-foreground">Total Attempts</p>
+                  <div className="text-2xl font-bold text-primary">
+                    {testHistory.length}
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Total Attempts
+                  </p>
                 </CardContent>
               </Card>
               <Card className="shadow-card">
                 <CardContent className="p-6 text-center">
                   <TrendingUp className="h-8 w-8 text-success mx-auto mb-2" />
                   <div className="text-2xl font-bold text-success">
-                    {Math.round(testHistory.reduce((acc, entry) => acc + entry.percentile, 0) / testHistory.length)}
+                    {Math.round(
+                      testHistory.reduce(
+                        (acc, entry) => acc + entry.percentile,
+                        0
+                      ) / testHistory.length
+                    )}
                   </div>
-                  <p className="text-sm text-muted-foreground">Avg Percentile</p>
+                  <p className="text-sm text-muted-foreground">
+                    Avg Percentile
+                  </p>
                 </CardContent>
               </Card>
               <Card className="shadow-card">
                 <CardContent className="p-6 text-center">
                   <Award className="h-8 w-8 text-accent mx-auto mb-2" />
-                  <div className="text-2xl font-bold text-accent">{badges.length}</div>
+                  <div className="text-2xl font-bold text-accent">
+                    {badges.length}
+                  </div>
                   <p className="text-sm text-muted-foreground">Badges Earned</p>
                 </CardContent>
               </Card>
@@ -257,9 +415,7 @@ const AthleteHistory = () => {
                   <BarChart3 className="mr-2 h-5 w-5" />
                   Performance Trends
                 </CardTitle>
-                <CardDescription>
-                  Track your progress over time
-                </CardDescription>
+                <CardDescription>Track your progress over time</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="h-80">
@@ -268,14 +424,17 @@ const AthleteHistory = () => {
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="date" />
                       <YAxis />
-                      <Tooltip 
-                        formatter={(value, name) => [value, name === "percentile" ? "Percentile" : "Result"]}
+                      <Tooltip
+                        formatter={(value, name) => [
+                          value,
+                          name === "percentile" ? "Percentile" : "Result",
+                        ]}
                         labelFormatter={(label) => `Date: ${label}`}
                       />
-                      <Line 
-                        type="monotone" 
-                        dataKey="percentile" 
-                        stroke="hsl(var(--primary))" 
+                      <Line
+                        type="monotone"
+                        dataKey="percentile"
+                        stroke="hsl(var(--primary))"
                         strokeWidth={2}
                         dot={{ fill: "hsl(var(--primary))" }}
                       />
@@ -310,19 +469,29 @@ const AthleteHistory = () => {
                   </TableHeader>
                   <TableBody>
                     {filteredHistory.map((entry, index) => {
-                      const test = fitnessTests.find(t => t.id === entry.testId);
+                      const test = fitnessTests.find(
+                        (t) => t.id === entry.testId
+                      );
                       const StatusIcon = getStatusIcon(entry.status);
-                      
+
                       return (
                         <TableRow key={index}>
-                          <TableCell className="font-medium">{test?.name || entry.testId}</TableCell>
-                          <TableCell>{new Date(entry.date).toLocaleDateString()}</TableCell>
-                          <TableCell>{entry.result}</TableCell>
-                          <TableCell>
-                            <Badge variant="outline">{entry.percentile}th</Badge>
+                          <TableCell className="font-medium">
+                            {test?.name || entry.testId}
                           </TableCell>
                           <TableCell>
-                            <Badge variant={getStatusColor(entry.status) as any}>
+                            {new Date(entry.date).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell>{entry.result}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline">
+                              {entry.percentile}th
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={getStatusColor(entry.status) as any}
+                            >
                               <StatusIcon className="mr-1 h-3 w-3" />
                               {entry.status}
                             </Badge>
@@ -350,7 +519,10 @@ const AthleteHistory = () => {
               <CardContent>
                 <div className="grid md:grid-cols-3 gap-6">
                   {badges.map((badge, index) => (
-                    <Card key={index} className="shadow-card hover:shadow-glow transition-all duration-300">
+                    <Card
+                      key={index}
+                      className="shadow-card hover:shadow-glow transition-all duration-300"
+                    >
                       <CardContent className="p-6 text-center">
                         <div className="w-16 h-16 bg-gradient-accent rounded-full flex items-center justify-center mx-auto mb-4">
                           <Award className="h-8 w-8 text-white" />
